@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Tower Control</title>
+    <style>
+        @font-face {
+            font-family: 'Gunship';
+            font-style: normal;
+            font-weight: normal;
+            src: local('Gunship'), url('assets/gun4f.woff') format('woff');
+        }
+        body{
+            /* background: #6a6bae;*/
+            margin: 0;
+            padding: 0;
+            font-family: 'Gunship', monospace;
+        }
+        .content {
+            color: #c2e2e5;
+            font-size: 5vw;
+            background-color: #355183;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            left: 0;
+            padding: 5rem;
+            box-shadow: 0px 0px 4rem #041737 inset;
+        }
+        #text {
+            white-space: pre;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+	    <span id="text"></span><span id="cuursor"></span>
+    </div>
+
+    <!-- https://github.com/kittykatattack/sound.js -->
+    <script src="assets/sound.js"></script>
+    <!-- https://github.com/mattboldt/typed.js -->
+    <script src="assets/typed.umd.js"></script>
+    <script>
+
+        // CL Inspired
+
+        // the 'fin' names : Aelita deactivating tower sound effects, s1 ep2.
+        // while non-'fin' names are taken from opening CL episode
+        //   ^ source : r/CodeLyoko/comments/m3lp60/
+
+        sounds.load([
+            "assets/cmd-type.wav",
+            "assets/cmd-beep.wav",
+            "assets/cmd-type-fin.wav",
+            "assets/cmd-beep-fin.wav"
+        ]);
+
+        // Choose sounds between this 2 variable
+        var cmdtype = sounds["assets/cmd-type-fin.wav"];       // typing sound
+        var cmdbeep = sounds["assets/cmd-beep.wav"];       // cursor blinking sound
+        let _blinkSound = false;
+        var typed;
+        
+
+        sounds.whenLoaded = settingUp;
+
+        function settingUp() {
+            cmdtype.loop = true;
+            blinkingCursor('_', '#c2e2e5', 'cuursor', 400, 100, 200);
+
+            // User interaction required to play audio, cuz autoplay nowadays are protected
+            window.addEventListener('click', _tester, {once : true});
+            function _tester() {
+                typed = new Typed('#text', {
+                    strings: ['AELiTA', `CODE^3000\nLYOKO`],
+                    typeSpeed: 90,
+                    backSpeed: 0,
+                    startDelay: 300,
+                    fadeOut: true,
+                    cursorChar: "",
+                    preStringTyped: function(){setTimeout( () => {_blinkSound=true},200 );cmdtype.play()},
+                    onStringTyped: function(pos){cmdtype.pause();console.log('position : '+pos)},
+                    onTypingPaused: function(){cmdtype.pause()},
+                    onTypingResumed: function(){cmdtype.play()},
+                });
+                // preStringTyped (above) : typing sound comes first, also delaying blink sound
+                
+                // Just to stop sound when user doesn't close this site, optional
+                setTimeout(function() {cmdbeep.fadeOut(4);}, 10000);
+            }
+        }
+
+
+        function blinkingCursor(cursorChar, cursorColor, targetID, blinkDuration=500, holdTime=100, fadeOut=400) {
+            // workaround for unsynced blink and hold time
+            if (holdTime >= blinkDuration) {
+                holdTime = Math.round((blinkDuration+fadeOut)/2); // round blink and fade
+                console.log('holdTime must be lower than blinkDuration');
+                console.log('auto-set holdTime to: '+holdTime+'ms');
+            }
+
+            // Blinking
+            document.getElementById(targetID).innerHTML = cursorChar;
+            document.getElementById(targetID).style.color = cursorColor;
+
+            function blinkTransition() {
+                document.getElementById(targetID).style.transitionDuration = fadeOut+'ms';
+                document.getElementById(targetID).style.color = "transparent";
+                document.getElementById(targetID).style.textShadow = "none";
+            }
+
+            setTimeout(blinkTransition, holdTime);
+            setInterval(function() {
+                document.getElementById(targetID).style.transitionDuration = "0s";
+                document.getElementById(targetID).style.color = cursorColor;
+                document.getElementById(targetID).style.textShadow = "1px 0px 6px white, 5px 0px 9px white";
+                document.getElementById(targetID).innerHTML = cursorChar;
+                if (_blinkSound == true) { cmdbeep.play() } else { cmdbeep.pause() }
+                setTimeout(blinkTransition, holdTime);
+            }, blinkDuration);
+        }
+	</script>
+</body>
+</html>
